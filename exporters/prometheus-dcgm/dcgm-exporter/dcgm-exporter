@@ -83,7 +83,7 @@ function info_metric() {
     printf "dcgm_gpu_info{gpu=\"%s\",uuid=\"%s\",gpu_type=\"%s\"} 1\n", gpu, uuid, gpu_type > out".swp"
 }
 (NF && NR > 2 && !($1 ~ "^#" || $1 ~ "^Id")) {
-    # Label
+    # Labels
     i = 1
     gpu = $(i++)                                                                                                      # field 0 (implicit)
     gpu_type = $(i++)                                                                                                 # field 50
