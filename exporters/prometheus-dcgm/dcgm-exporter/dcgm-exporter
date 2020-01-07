@@ -44,19 +44,45 @@ fi
 
 until nvidia-smi
 do
-  sleep 1
+  sleep 2
 done
 
 sleep 5
 
-echo "Collecting metrics at ${OUTPUT_FILE} every ${COLLECT_INTERVAL_MS}ms..."
+indices=-1
+if [ -v NODE_NAME ]; then
+  node="${NODE_NAME}"
+  node=$(echo "${node//-/_}")
+
+  if [ -v "${node}" ]; then
+    [[ -z $( eval "echo \$$node" ) ]] && indices='-1' || indices=$( eval "echo \$$node" )
+  fi
+
+  echo "Node: ${node}"
+fi
+
+echo "Collecting metrics at ${OUTPUT_FILE} every ${COLLECT_INTERVAL_MS}ms from GPUs:${indices} (-1 means all GPUs)."
+
+indices_array=$(echo $indices | tr "," "\n")
+min=9999
+
+for index in $indices_array
+do
+  if [ "${index}" -lt "${min}" ]; then
+    min="${index}"
+  fi
+done
+
+if [ "${min}" -lt 0 ]; then
+  min=0
+fi
 
 if [ "${DCP_METRICS}" = "yes" ]; then
     echo "Collecting DCP metrics as well."
     DCP_FIELDS=",1001,1002,1003,1004,1005"
 fi
 
-dcgmi dmon -d "${COLLECT_INTERVAL_MS}" -e \
+dcgmi dmon -d "${COLLECT_INTERVAL_MS}" -i "${indices}" -e \
 "50,54,"\
 "100,101,"\
 "140,150,155,156,"\
@@ -70,10 +96,10 @@ dcgmi dmon -d "${COLLECT_INTERVAL_MS}" -e \
 # The first part of the sed command is inorder to remove leading and trailing spaces: cyberciti.biz/tips/delete-leading-spaces-from-front-of-each-word.html
 # The second part is inorder to add a space after the ID, this patch was added due to an issue we had where there was only one space between the ID and the Type and that caused the awk to fail to seperate between the two.
 sed 's/^[ \t]*//;s/[ \t]*$//;s/[0-9]\+/ & /1;s/^[ \t]*//;s/[ \t]*$//' | \
-awk -F '  +' -v "dcp=${DCP_METRICS}" -v "out=${OUTPUT_FILE}" -v "ngpus=$(nvidia-smi -L | wc -l)" '
+awk -F '  +' -v "dcp=${DCP_METRICS}" -v "out=${OUTPUT_FILE}" -v "ngpus=$(nvidia-smi -L | wc -l)" -v "min_gpu=${min}" '
 function metric(name, type, help, value) {
     if (value !~ "N/A") {
-        if (gpu == 0) {
+        if (gpu == min_gpu) {
             printf "# HELP dcgm_%s %s\n", name, help > out".swp"
             printf "# TYPE dcgm_%s %s\n", name, type > out".swp"
         }
