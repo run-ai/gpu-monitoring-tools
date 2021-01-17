@@ -4,10 +4,16 @@ commands:
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-
       - run:
           name: "Docker login"
           command: cat my.json | docker login -u _json_key --password-stdin https://gcr.io
+
+  install_project_dependencies:
+    steps:
+      - run:
+          name: "Install project dependencies"
+          command: |
+            go get -v -t ./...
 
   test_installkit:
     steps:
@@ -43,6 +49,7 @@ jobs:
       - image: google/cloud-sdk
     steps:
       - checkout
+      - install_project_dependencies
       - run:
           name: "Extract gcloud private key to file"
           command: echo "$STAGING_GCLOUD_SERVICE_JSON_CONTENT" | base64 -d > ./my.json
@@ -67,6 +74,7 @@ jobs:
       - image: google/cloud-sdk
     steps:
       - checkout
+      - install_project_dependencies
       - run:
           name: "Extract gcloud private key to file"
           command: echo "$PRODUCTION_GCLOUD_SERVICE_JSON_CONTENT" | base64 -d > ./my.json
@@ -93,7 +101,9 @@ workflows:
       - deploy-staging:
           filters:
             branches:
-              only: master
+              only:
+              - master
+              - ubi2
       - deploy-production:
           filters:
             tags:
