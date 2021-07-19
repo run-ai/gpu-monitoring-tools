@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: "dcgm-exporter"
   labels:
     app.kubernetes.io/name: "dcgm-exporter"
-    app.kubernetes.io/version: "2.1.1"
+    app.kubernetes.io/version: "2.4.0"
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: "dcgm-exporter"
-      app.kubernetes.io/version: "2.1.1"
+      app.kubernetes.io/version: "2.4.0"
   endpoints:
   - port: "metrics"
     path: "/metrics"
