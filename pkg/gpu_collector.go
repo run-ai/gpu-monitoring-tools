@@ -79,7 +79,7 @@ func (c *DCGMCollector) GetMetrics() ([][]Metric, error) {
 
 		// InstanceInfo will be nil for GPUs
 		gpuMetrics := ToMetric(vals, c.Counters, mi.DeviceInfo, mi.InstanceInfo, c.UseOldNamespace, c.Hostname)
-		metrics[i] = c.addRunaiMetrics(deviceInfo, gpuMetrics)
+		metrics[i] = c.addRunaiMetrics(mi.DeviceInfo, gpuMetrics)
 	}
 
 	return metrics, nil
