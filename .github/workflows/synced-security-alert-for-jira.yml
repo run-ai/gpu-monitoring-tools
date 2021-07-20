@@ -1,0 +1,20 @@
+name: GitHub Security Alerts for Jira
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+#     workflow_dispatch:
+
+jobs:
+  syncSecurityAlerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Sync security alerts to Jira issues"
+        uses: reload/github-security-jira@v1.x
+        env:
+          GH_SECURITY_TOKEN: ${{ secrets.GIT_HUB_TOKEN }}
+          JIRA_TOKEN: ${{ secrets.JIRA_SECRET }}
+          JIRA_HOST: https://runai.atlassian.net/
+          JIRA_USER: jira-bot@run.ai
+          JIRA_PROJECT: RUN
+          JIRA_ISSUE_TYPE: Bug

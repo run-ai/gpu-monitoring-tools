@@ -1,0 +1,39 @@
+name: Verify Design and Test Plan exist in ticket
+
+# Controls when the workflow will run
+
+on:
+#  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'master'
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Jira ticket integration
+    steps:
+      - name: Login
+        uses: atlassian/gajira-login@master
+        env:
+          JIRA_BASE_URL: https://runai.atlassian.net/
+          JIRA_USER_EMAIL: jira-bot@run.ai
+          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
+      - name: Find Jira ticket in branch name
+        id: ticket
+        uses: run-ai/gajira-find-issue-key@master
+        with:
+          from: branch
+      - name: Setup Jira CLI
+        uses: atlassian/gajira-cli@v2.0.2
+      - name: Verify fields are filled out
+        run: |
+          export JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }}
+          jira list -q "(ID=${{steps.ticket.outputs.issue}} AND type=Bug) or (ID=${{steps.ticket.outputs.issue}} AND type=Story AND \"Design[Paragraph]\" is NOT EMPTY AND \"Test Plan[Paragraph]\" is not EMPTY)"  > /tmp/query-result.txt
+          cat /tmp/query-result.txt
+          if [ -s /tmp/query-result.txt ]; then
+            echo "Both Design and Test Plan fields are filled out in ticket ${{steps.ticket.outputs.issue}}"
+          else
+            echo "Either design or a test plan at not filled out in ticket: ${{steps.ticket.outputs.issue}} "
+            exit 1
+          fi
